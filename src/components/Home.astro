@@ -1,0 +1,110 @@
+---
+/**
+ * Homepage skeleton. Section order follows Concept A (v2).
+ * Each block is a wireframe placeholder; real content comes in step 2.
+ */
+import Base from '../layouts/Base.astro';
+import { t, localize, type Lang } from '../i18n/utils';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+
+const sections: { id: string; label: Record<Lang, string>; height: number }[] = [
+  { id: 'trusted-by', label: { en: 'Trusted by', fr: 'Ils nous font confiance' }, height: 96 },
+  { id: 'problem', label: { en: 'The problem', fr: 'Le problème' }, height: 220 },
+  { id: 'how-it-works', label: { en: 'How Polaris works', fr: 'Fonctionnement de Polaris' }, height: 260 },
+  { id: 'features', label: { en: 'Key features', fr: 'Fonctionnalités clés' }, height: 360 },
+  { id: 'product', label: { en: 'Product in action', fr: 'Le produit en action' }, height: 420 },
+  { id: 'coverage', label: { en: 'Data coverage', fr: 'Couverture des données' }, height: 220 },
+  { id: 'audiences', label: { en: "Who it's for", fr: "À qui s'adresse Polaris" }, height: 220 },
+  { id: 'trust', label: { en: 'Trust and security', fr: 'Confiance et sécurité' }, height: 260 },
+  { id: 'impact', label: { en: 'Evidence of impact', fr: 'Résultats' }, height: 180 },
+  { id: 'resources', label: { en: 'Resources', fr: 'Ressources' }, height: 200 },
+];
+---
+<Base lang={lang}>
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <h1>{t(lang, 'homeTitle')}</h1>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href={localize('/demo/', lang)}>{t(lang, 'requestDemo')}</a>
+          <a class="btn btn-secondary" href="#how-it-works">{t(lang, 'seeHow')}</a>
+        </div>
+      </div>
+      <div class="placeholder hero-visual" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  {
+    sections.map((s) => (
+      <section id={s.id} class="home-section">
+        <div class="container">
+          <h2 class="section-label">{s.label[lang]}</h2>
+          <div class="placeholder" style={`height:${s.height}px`} aria-hidden="true" />
+        </div>
+      </section>
+    ))
+  }
+
+  <section class="final-cta">
+    <div class="container final-cta-inner">
+      <a class="btn btn-primary" href={localize('/demo/', lang)}>{t(lang, 'requestDemo')}</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    padding: var(--space-16) 0 var(--space-12);
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-12);
+    align-items: center;
+  }
+  .hero h1 {
+    max-width: 16ch;
+  }
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-8);
+  }
+  .hero-visual {
+    aspect-ratio: 4 / 3;
+  }
+  .home-section {
+    padding: var(--space-8) 0;
+  }
+  .section-label {
+    margin-bottom: var(--space-4);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .placeholder {
+    background: var(--gray-50);
+    border: 1px dashed var(--gray-300);
+    border-radius: var(--radius);
+  }
+  .final-cta {
+    padding: var(--space-16) 0 0;
+  }
+  .final-cta-inner {
+    display: flex;
+    justify-content: center;
+  }
+  @media (max-width: 900px) {
+    .hero-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

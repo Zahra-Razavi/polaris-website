@@ -1,0 +1,63 @@
+---
+import { localize, basePath, type Lang } from '../i18n/utils';
+import { languages } from '../i18n/ui';
+import { findPage } from '../data/sitemap';
+
+interface Props {
+  lang: Lang;
+  /** "short" shows EN | FR, "long" shows English | Français. */
+  variant?: 'short' | 'long';
+}
+
+const { lang, variant = 'short' } = Astro.props;
+const path = basePath(Astro.url.pathname);
+// Pages outside the sitemap (such as 404) switch to the other language's home page.
+const base = path === '/' || findPage(path) ? path : '/';
+const codes = Object.keys(languages) as Lang[];
+---
+<ul class="lang-switch" aria-label={lang === 'fr' ? 'Langue' : 'Language'}>
+  {
+    codes.map((code) => {
+      const label = variant === 'short' ? code.toUpperCase() : languages[code];
+      return (
+        <li>
+          {code === lang ? (
+            <span class="current" aria-current="true">{label}</span>
+          ) : (
+            <a href={localize(base, code)} hreflang={code} lang={code}>
+              {variant === 'short' && <span class="sr-only">{languages[code]}</span>}
+              <span aria-hidden={variant === 'short' ? 'true' : undefined}>{label}</span>
+            </a>
+          )}
+        </li>
+      );
+    })
+  }
+</ul>
+
+<style>
+  .lang-switch {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: var(--fs-sm);
+  }
+  li + li::before {
+    content: '|';
+    color: var(--gray-300);
+    margin: 0 0.5rem;
+  }
+  .current {
+    font-weight: 600;
+  }
+  a {
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+  a:hover {
+    color: var(--navy-900);
+    text-decoration: underline;
+  }
+</style>

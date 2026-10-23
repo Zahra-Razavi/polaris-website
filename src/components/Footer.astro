@@ -1,0 +1,79 @@
+---
+import Logo from './Logo.astro';
+import LanguageSwitch from './LanguageSwitch.astro';
+import { footerLinks, findPage } from '../data/sitemap';
+import { t, localize, type Lang } from '../i18n/utils';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const links = footerLinks.map((path) => findPage(path)!);
+const year = new Date().getFullYear();
+---
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <a class="brand" href={localize('/', lang)}>
+      <Logo />
+      <span class="sr-only">{t(lang, 'home')}</span>
+    </a>
+    <nav aria-label={t(lang, 'footerNav')}>
+      <ul class="footer-links">
+        {links.map((pg) => <li><a href={localize(pg.path, lang)}>{pg.nav[lang]}</a></li>)}
+      </ul>
+    </nav>
+    <LanguageSwitch lang={lang} variant="long" />
+  </div>
+  <div class="container footer-bottom">
+    <p>© {year} Polaris</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-top: var(--space-24);
+    border-top: 1px solid var(--border);
+    background: var(--gray-50);
+  }
+  .footer-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-6) var(--space-12);
+    padding: var(--space-12) 0 var(--space-8);
+  }
+  .brand {
+    text-decoration: none;
+  }
+  .footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-8);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: var(--fs-sm);
+  }
+  .footer-links a {
+    color: var(--gray-700);
+    text-decoration: none;
+  }
+  .footer-links a:hover {
+    color: var(--navy-900);
+    text-decoration: underline;
+  }
+  .footer-bottom {
+    padding: var(--space-6) 0 var(--space-8);
+    border-top: 1px solid var(--border);
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+  }
+  @media (max-width: 760px) {
+    .footer-inner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>

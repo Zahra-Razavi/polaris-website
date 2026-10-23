@@ -1,0 +1,8 @@
+---
+import StubPage from '../components/StubPage.astro';
+import { stubPaths } from '../lib/stubPaths';
+
+export const getStaticPaths = stubPaths;
+const { page } = Astro.props;
+---
+<StubPage page={page} lang="en" />

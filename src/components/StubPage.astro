@@ -1,0 +1,88 @@
+---
+import Base from '../layouts/Base.astro';
+import { findSection, type Page } from '../data/sitemap';
+import { t, localize, type Lang } from '../i18n/utils';
+
+interface Props {
+  page: Page;
+  lang: Lang;
+}
+
+const { page, lang } = Astro.props;
+const section = findSection(page.path);
+const isOverview = section?.base === page.path;
+const children = isOverview ? section!.pages.filter((pg) => pg.path !== page.path) : [];
+---
+<Base lang={lang} title={page.title[lang]}>
+  <section class="page-head">
+    <div class="container">
+      {
+        section && !isOverview && (
+          <nav class="breadcrumb" aria-label={lang === 'fr' ? "Fil d'Ariane" : 'Breadcrumb'}>
+            <a href={localize(section.base, lang)}>{section.label[lang]}</a>
+          </nav>
+        )
+      }
+      <h1>{page.title[lang]}</h1>
+      <p class="muted">{t(lang, 'comingSoon')}</p>
+    </div>
+  </section>
+
+  {
+    children.length > 0 && (
+      <section class="container">
+        <h2 class="sr-only">{t(lang, 'inThisSection')}</h2>
+        <ul class="child-grid">
+          {children.map((pg) => (
+            <li>
+              <a href={localize(pg.path, lang)}>{pg.title[lang]}</a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</Base>
+
+<style>
+  .page-head {
+    padding: var(--space-16) 0 var(--space-12);
+  }
+  .page-head h1 {
+    max-width: 18ch;
+    margin-bottom: var(--space-4);
+  }
+  .breadcrumb {
+    margin-bottom: var(--space-4);
+    font-size: var(--fs-sm);
+  }
+  .breadcrumb a {
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+  .breadcrumb a:hover {
+    color: var(--navy-900);
+    text-decoration: underline;
+  }
+  .child-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--space-4);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .child-grid a {
+    display: block;
+    height: 100%;
+    padding: var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color 0.15s ease;
+  }
+  .child-grid a:hover {
+    border-color: var(--navy-900);
+  }
+</style>

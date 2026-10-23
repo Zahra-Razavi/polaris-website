@@ -1,0 +1,428 @@
+---
+import Logo from './Logo.astro';
+import LanguageSwitch from './LanguageSwitch.astro';
+import { sections, type Section, type Page } from '../data/sitemap';
+import { t, localize, basePath, type Lang } from '../i18n/utils';
+import { SITE } from '../config';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const current = basePath(Astro.url.pathname);
+
+function columns(section: Section): { label?: string; pages: Page[]; span?: boolean }[] {
+  if (!section.groups) return [{ pages: section.pages }];
+  // Ungrouped pages (the overview) sit in a full-width row above the grouped columns.
+  const ungrouped = section.pages.filter((pg) => !pg.group);
+  return [
+    { pages: ungrouped, span: true },
+    ...section.groups.map((g) => ({
+      label: g.label[lang],
+      pages: section.pages.filter((pg) => pg.group === g.id),
+    })),
+  ];
+}
+---
+<header class="site-header" data-header>
+  <div class="container header-inner">
+    <a class="brand" href={localize('/', lang)}>
+      <Logo />
+      <span class="sr-only">{t(lang, 'home')}</span>
+    </a>
+
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" data-menu-toggle>
+      <span class="sr-only">{t(lang, 'menu')}</span>
+      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+        <path class="bar-top" d="M4 7h16" />
+        <path class="bar-mid" d="M4 12h16" />
+        <path class="bar-bot" d="M4 17h16" />
+      </svg>
+    </button>
+
+    <div class="nav-panel" id="site-nav">
+      <nav class="main-nav" aria-label={t(lang, 'mainNav')}>
+        <ul class="nav-list">
+          {
+            sections.map((section) => {
+              const active = current.startsWith(section.base);
+              const cols = columns(section);
+              return (
+                <li class="nav-item" data-nav-item>
+                  <button
+                    class="nav-trigger"
+                    type="button"
+                    aria-expanded="false"
+                    aria-controls={`menu-${section.id}`}
+                    data-active={active ? 'true' : undefined}
+                  >
+                    {section.label[lang]}
+                    <svg class="chevron" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+                      <path d="M4 6l4 4 4-4" />
+                    </svg>
+                  </button>
+                  <div class:list={['dropdown', { 'dropdown-wide': cols.length > 1 }]} id={`menu-${section.id}`}>
+                    {cols.map((col) => (
+                      <div class:list={['dropdown-col', { 'dropdown-span': col.span }]}>
+                        {col.label && <p class="dropdown-label">{col.label}</p>}
+                        <ul>
+                          {col.pages.map((pg) => (
+                            <li>
+                              <a
+                                href={localize(pg.path, lang)}
+                                aria-current={pg.path === current ? 'page' : undefined}
+                              >
+                                {pg.nav[lang]}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </li>
+              );
+            })
+          }
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        <LanguageSwitch lang={lang} />
+        <a class="signin" href={SITE.signInUrl}>{t(lang, 'signIn')}</a>
+        <a class="btn btn-primary" href={localize('/demo/', lang)}>{t(lang, 'requestDemo')}</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+  }
+  .header-inner {
+    height: var(--header-h);
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+  }
+  .brand {
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .nav-panel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-6);
+  }
+  .nav-list {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .nav-item {
+    position: relative;
+    flex-shrink: 0;
+  }
+  .nav-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 40px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    font: inherit;
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    color: var(--gray-700);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .nav-trigger:hover,
+  .nav-trigger[aria-expanded='true'] {
+    background: var(--gray-50);
+    color: var(--navy-900);
+  }
+  .nav-trigger[data-active] {
+    color: var(--navy-900);
+    font-weight: 600;
+  }
+  .chevron {
+    flex-shrink: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 0.15s ease;
+  }
+  .nav-trigger[aria-expanded='true'] .chevron {
+    transform: rotate(180deg);
+  }
+
+  .dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 240px;
+    padding: var(--space-2);
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  .dropdown-wide {
+    min-width: 560px;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+  }
+  .nav-trigger[aria-expanded='true'] + .dropdown {
+    display: block;
+  }
+  .nav-trigger[aria-expanded='true'] + .dropdown-wide {
+    display: grid;
+  }
+  .dropdown-span {
+    grid-column: 1 / -1;
+    padding-bottom: var(--space-1);
+    border-bottom: 1px solid var(--border);
+  }
+  .dropdown ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .dropdown-label {
+    padding: var(--space-2) var(--space-3) var(--space-1);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .dropdown a {
+    display: block;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+    color: var(--navy-900);
+    text-decoration: none;
+  }
+  .dropdown a:hover {
+    background: var(--gray-50);
+  }
+  .dropdown a[aria-current='page'] {
+    background: var(--navy-100);
+    font-weight: 600;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+  }
+  .signin {
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .signin:hover {
+    text-decoration: underline;
+  }
+
+  .menu-toggle {
+    display: none;
+    margin-left: auto;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--navy-900);
+    cursor: pointer;
+  }
+  .menu-toggle path {
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    transform-origin: 12px 12px;
+  }
+  .menu-toggle[aria-expanded='true'] .bar-top {
+    transform: translateY(5px) rotate(45deg);
+  }
+  .menu-toggle[aria-expanded='true'] .bar-mid {
+    opacity: 0;
+  }
+  .menu-toggle[aria-expanded='true'] .bar-bot {
+    transform: translateY(-5px) rotate(-45deg);
+  }
+
+  /* Mobile and tablet */
+  @media (max-width: 1239px) {
+    .menu-toggle {
+      display: inline-flex;
+    }
+    .nav-panel {
+      display: none;
+      position: fixed;
+      top: var(--header-h);
+      left: 0;
+      right: 0;
+      bottom: 0;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      gap: var(--space-8);
+      padding: var(--space-4) var(--gutter) var(--space-12);
+      background: var(--white);
+      overflow-y: auto;
+      border-top: 1px solid var(--border);
+    }
+    .site-header.nav-open .nav-panel {
+      display: flex;
+    }
+    .nav-list {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+    }
+    .nav-item {
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-trigger {
+      width: 100%;
+      height: 56px;
+      justify-content: space-between;
+      padding: 0;
+      font-size: var(--fs-base);
+      background: transparent !important;
+    }
+    .dropdown,
+    .dropdown-wide {
+      position: static;
+      min-width: 0;
+      padding: 0 0 var(--space-4);
+      border: 0;
+      box-shadow: none;
+    }
+    .nav-trigger[aria-expanded='true'] + .dropdown-wide {
+      display: block;
+    }
+    .dropdown-span {
+      border-bottom: 0;
+    }
+    .dropdown a {
+      padding: var(--space-3);
+      font-size: var(--fs-base);
+    }
+    .dropdown-label {
+      padding: var(--space-4) 0 var(--space-1);
+    }
+    .header-actions {
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--space-4);
+    }
+    .header-actions .btn {
+      width: 100%;
+    }
+    .signin {
+      text-align: center;
+      padding: var(--space-2) 0;
+    }
+  }
+</style>
+
+<script>
+  const header = document.querySelector<HTMLElement>('[data-header]');
+  if (header) {
+    const toggle = header.querySelector<HTMLButtonElement>('[data-menu-toggle]')!;
+    const triggers = Array.from(header.querySelectorAll<HTMLButtonElement>('.nav-trigger'));
+    const desktop = window.matchMedia('(min-width: 1240px)');
+    const canHover = window.matchMedia('(hover: hover)');
+    let closeTimer: number | undefined;
+    // A menu opened by hover should stay open when the same pointer then clicks it.
+    let hoverOpened: HTMLButtonElement | null = null;
+
+    const setOpen = (trigger: HTMLButtonElement, open: boolean) => {
+      trigger.setAttribute('aria-expanded', String(open));
+    };
+    const closeAll = (except?: HTMLButtonElement) => {
+      triggers.forEach((tr) => tr !== except && setOpen(tr, false));
+    };
+    const setMobileMenu = (open: boolean) => {
+      header.classList.toggle('nav-open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+      document.body.style.overflow = open ? 'hidden' : '';
+      if (!open) closeAll();
+    };
+
+    triggers.forEach((trigger) => {
+      trigger.addEventListener('click', () => {
+        if (hoverOpened === trigger) {
+          hoverOpened = null;
+          return;
+        }
+        const open = trigger.getAttribute('aria-expanded') !== 'true';
+        if (desktop.matches) closeAll(trigger);
+        setOpen(trigger, open);
+      });
+
+      const item = trigger.closest<HTMLElement>('[data-nav-item]')!;
+      item.addEventListener('mouseenter', () => {
+        if (!desktop.matches || !canHover.matches) return;
+        window.clearTimeout(closeTimer);
+        closeAll(trigger);
+        if (trigger.getAttribute('aria-expanded') !== 'true') hoverOpened = trigger;
+        setOpen(trigger, true);
+      });
+      item.addEventListener('mouseleave', () => {
+        if (!desktop.matches || !canHover.matches) return;
+        hoverOpened = null;
+        closeTimer = window.setTimeout(() => setOpen(trigger, false), 150);
+      });
+    });
+
+    toggle.addEventListener('click', () => {
+      setMobileMenu(!header.classList.contains('nav-open'));
+    });
+
+    document.addEventListener('click', (e) => {
+      if (desktop.matches && !header.contains(e.target as Node)) closeAll();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const open = triggers.find((tr) => tr.getAttribute('aria-expanded') === 'true');
+      if (open) {
+        setOpen(open, false);
+        open.focus();
+      } else if (header.classList.contains('nav-open')) {
+        setMobileMenu(false);
+        toggle.focus();
+      }
+    });
+
+    // Leaving the mobile layout resets the menu, so nothing stays stuck open or hidden.
+    desktop.addEventListener('change', () => {
+      setMobileMenu(false);
+    });
+  }
+</script>
